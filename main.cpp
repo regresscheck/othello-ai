@@ -41,7 +41,7 @@ public:
     enum FieldState {EMPTY, WHITE, BLACK};
 private:
     FieldState field[FIELD_SIZE][FIELD_SIZE];
-    FieldState currentPlayer;
+    FieldState current_player;
 public:
     OthelloState() {
         for (int i = 0; i < FIELD_SIZE; i++)
@@ -50,7 +50,7 @@ public:
         // constant indexes by rules
         field[3][3] = field[4][4] = FieldState::WHITE;
         field[3][4] = field[4][3] = FieldState::BLACK;
-        currentPlayer = FieldState::BLACK;
+        current_player = FieldState::BLACK;
     }
     FieldState & getField(const Position & position) {
         return field[position.x][position.y];
@@ -64,7 +64,7 @@ public:
         position.update(dx, dy);
         bool isCorrect_position = false;
         for (position; position.isCorrect(); position.update(dx, dy)) {
-            if (getField(position) == currentPlayer) {
+            if (getField(position) == current_player) {
                 if (isCorrect_position)
                     return position;
                 else
@@ -95,10 +95,10 @@ public:
     }
 
     void changePlayer() {
-        if (currentPlayer == FieldState::WHITE)
-            currentPlayer = FieldState::BLACK;
+        if (current_player == FieldState::WHITE)
+            current_player = FieldState::BLACK;
         else
-            currentPlayer = FieldState::WHITE;
+            current_player = FieldState::WHITE;
     }
     void putDisk(const Position & position) {
         for (int dx = -1; dx <= 1; dx++)
@@ -110,7 +110,7 @@ public:
                         reverseLine(position, next_position);
                     }
                 }
-        getField(position) = currentPlayer;
+        getField(position) = current_player;
         changePlayer();
     }
     bool isPossibleMove(const Position & position) const {
@@ -143,7 +143,7 @@ public:
         int result = 0;
         for (int x = 0; x < FIELD_SIZE; x++)
             for (int y = 0; y < FIELD_SIZE; y++) {
-                if (field[x][y] == currentPlayer)
+                if (field[x][y] == current_player)
                     result++;
                 else
                     if (field[x][y] != FieldState::EMPTY)
@@ -155,7 +155,7 @@ public:
         long long result = 0;
         for (int x = 0; x < FIELD_SIZE; x++)
             for (int y = 0; y < FIELD_SIZE; y++) {
-                if (field[x][y] == currentPlayer)
+                if (field[x][y] == current_player)
                     result += EVALUATION_DISK_MULTIPLIER;
                 else
                     if (field[x][y] != FieldState::EMPTY)
@@ -166,7 +166,7 @@ public:
         // iterates all corners
         for (int x = 0; x < FIELD_SIZE; x += FIELD_SIZE - 1)
             for (int y = 0; y < FIELD_SIZE; y += FIELD_SIZE - 1) {
-                if (field[x][y] == currentPlayer)
+                if (field[x][y] == current_player)
                     result += EVALUATION_CORNER_MULTIPLIER;
                 else
                     if (field[x][y] != FieldState::EMPTY)

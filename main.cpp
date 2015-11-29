@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <climits>
+#include <cstring>
 
 using namespace std;
 
@@ -10,7 +11,7 @@ const int FIELD_SIZE = 8;
 const int EVALUATION_DISK_MULTIPLIER = 1;
 const int EVALUATION_MOVE_MULTIPLIER = 100;
 const int EVALUATION_CORNER_MULTIPLIER = 1000;
-const int SEARCH_DEPTH = 5;
+const int SEARCH_DEPTH = 6;
 
 int sign(int x) {
     if (x < 0)
@@ -245,31 +246,45 @@ void printState(const OthelloState & state) {
     cout << endl;
 }
 
+Position read_enemy_turn() {
+    char x_char;
+    int x, y;
+    cin >> x_char >> y;
+    x = x_char - 'a';
+    y--;
+    return Position(x, y);
+}
+
+Position print_my_turn(const Position & position) {
+    cout << "move " << char(position.x + 'a') << ' ' << position.y + 1 << endl;
+    cout.flush();
+}
+
 int main()
 {
-
     OthelloState state;
-    int moves_count = 0;
-    int bad_moves_count = 0;
-    int x, y;
-    while (true) {
-        cout << "MOVE #" << moves_count << ". BALANCE: " << state.getBalance() << endl;
-        printState(state);
-        moves_count++;
-        AlphabetaResult result;
-        result = alphabeta(state, SEARCH_DEPTH, LLONG_MIN, LLONG_MAX, true);
-        if (result.position.isCorrect()) {
-            state.putDisk(result.position);
-            bad_moves_count = 0;
-        } else {
-            state.changePlayer();
-            bad_moves_count++;
-        }
+    char temp[1005], str[1005];
 
-        // both players can't move
-        if (bad_moves_count == 2) {
-            break;
+    AlphabetaResult result;
+    cin >> temp >> str;
+    if (strcmp(str, "white") == 0) {
+        cin >> temp;
+        if (strcmp(temp, "move") != 0)
+            return 0;
+        state.putDisk(read_enemy_turn());
+    }
+    while (true) {
+        result = alphabeta(state, SEARCH_DEPTH, LLONG_MIN, LLONG_MAX, true);
+        cin >> temp;
+        if (strcmp(temp, "turn") != 0) {
+            return 0;
         }
+        state.putDisk(result.position);
+        print_my_turn(result.position);
+        cin >> temp;
+        if (strcmp(temp, "move") != 0)
+            return 0;
+        state.putDisk(read_enemy_turn());
     }
     return 0;
 }

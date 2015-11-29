@@ -1,4 +1,4 @@
-// First version of strategy. Plays with itself since no communication format for programs given yet.
+// Plays with another strategy according to communication protocol
 
 #include <iostream>
 #include <vector>
@@ -12,6 +12,7 @@ const int EVALUATION_DISK_MULTIPLIER = 1;
 const int EVALUATION_MOVE_MULTIPLIER = 100;
 const int EVALUATION_CORNER_MULTIPLIER = 1000;
 const int SEARCH_DEPTH = 6;
+const int INPUT_BUFFER_SIZE = 100;
 
 int sign(int x) {
     if (x < 0)
@@ -263,7 +264,7 @@ Position print_my_turn(const Position & position) {
 int main()
 {
     OthelloState state;
-    char temp[1005], str[1005];
+    char temp[INPUT_BUFFER_SIZE], str[INPUT_BUFFER_SIZE];
 
     AlphabetaResult result;
     cin >> temp >> str;

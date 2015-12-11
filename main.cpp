@@ -4,6 +4,7 @@
 #include <vector>
 #include <climits>
 #include <cstring>
+#include <cstdio>
 
 using namespace std;
 
@@ -13,6 +14,7 @@ const int EVALUATION_MOVE_MULTIPLIER = 100;
 const int EVALUATION_CORNER_MULTIPLIER = 1000;
 const int SEARCH_DEPTH = 6;
 const int INPUT_BUFFER_SIZE = 100;
+const int END_GAME_STATE_DISK_COUNT = 40;
 
 int sign(int x) {
     if (x < 0)
@@ -44,6 +46,7 @@ public:
 private:
     FieldState field[FIELD_SIZE][FIELD_SIZE];
     FieldState current_player;
+    int disks_count;
 public:
     OthelloState() {
         for (int i = 0; i < FIELD_SIZE; i++)
@@ -96,13 +99,18 @@ public:
         }
     }
 
+    bool isEndGame() const {
+        return disks_count >= END_GAME_STATE_DISK_COUNT;
+    }
+
     void changePlayer() {
         if (current_player == FieldState::WHITE)
             current_player = FieldState::BLACK;
         else
             current_player = FieldState::WHITE;
     }
-    void putDisk(const Position & position) {
+    void putDisk(const Position & position, bool change_player = true) {
+        disks_count++;
         for (int dx = -1; dx <= 1; dx++)
             for (int dy = -1; dy <= 1; dy++)
                 if (dx != 0 || dy != 0)
@@ -113,7 +121,8 @@ public:
                     }
                 }
         getField(position) = current_player;
-        changePlayer();
+        if (change_player)
+            changePlayer();
     }
     bool isPossibleMove(const Position & position) const {
         if (getField(position) != FieldState::EMPTY)
@@ -163,6 +172,8 @@ public:
                     if (field[x][y] != FieldState::EMPTY)
                         result -= EVALUATION_DISK_MULTIPLIER;
             }
+        if (!isEndGame())
+            result *= -1;
         result += getPossibleMoves().size() * EVALUATION_MOVE_MULTIPLIER;
 
         // iterates all corners
@@ -231,26 +242,27 @@ AlphabetaResult alphabeta(const OthelloState state, int depth, long long alpha, 
     }
 }
 
-void printState(const OthelloState & state) {
+void print_state(const OthelloState & state) {
     for (int i = 0; i < FIELD_SIZE; i++) {
         for (int j = 0; j < FIELD_SIZE; j++) {
             if (state.getField(Position(i, j)) == OthelloState::FieldState::EMPTY)
-                cout << '#';
+                cerr << '#';
             if (state.getField(Position(i, j)) == OthelloState::FieldState::BLACK)
-                cout << 'B';
+                cerr << 'B';
             if (state.getField(Position(i, j)) == OthelloState::FieldState::WHITE)
-                cout << 'W';
+                cerr << 'W';
 
         }
-        cout << endl;
+        cerr << endl;
     }
-    cout << endl;
+    cerr << endl;
 }
 
 Position read_enemy_turn() {
     char x_char;
     int x, y;
     cin >> x_char >> y;
+    cerr << "ENEMY: " << x_char << ' ' << y << endl;
     x = x_char - 'a';
     y--;
     return Position(x, y);
@@ -258,34 +270,55 @@ Position read_enemy_turn() {
 
 Position print_my_turn(const Position & position) {
     cout << "move " << char(position.x + 'a') << ' ' << position.y + 1 << endl;
+    cerr << "move " << char(position.x + 'a') << ' ' << position.y + 1 << endl;
     cout.flush();
+}
+
+void process_all_enemy_moves(OthelloState & state, bool change_color = true) {
+    char temp[INPUT_BUFFER_SIZE];
+    while (true) {
+        cin >> temp;
+        cerr << "TEMP: " << temp << endl;
+        if (strcmp(temp, "turn") == 0) {
+            if (change_color)
+                state.changePlayer();
+            return;
+        }
+        if (strcmp(temp, "move") == 0) {
+            state.putDisk(read_enemy_turn(), false);
+            print_state(state);
+        }
+        if (strcmp(temp, "bad") == 0) {
+            print_state(state);
+            return;
+        }
+    }
 }
 
 int main()
 {
+    //freopen("log.txt", "w", stderr);
     OthelloState state;
     char temp[INPUT_BUFFER_SIZE], str[INPUT_BUFFER_SIZE];
 
     AlphabetaResult result;
     cin >> temp >> str;
     if (strcmp(str, "white") == 0) {
-        cin >> temp;
-        if (strcmp(temp, "move") != 0)
-            return 0;
-        state.putDisk(read_enemy_turn());
+        process_all_enemy_moves(state);
+    } else {
+        process_all_enemy_moves(state, false);
     }
     while (true) {
         result = alphabeta(state, SEARCH_DEPTH, LLONG_MIN, LLONG_MAX, true);
-        cin >> temp;
-        if (strcmp(temp, "turn") != 0) {
+        if (!result.position.isCorrect()) {
+            cerr << "BAD POSITION FOUND" << endl;
+            cerr << "POSSIBLE MOVES COUNT: " << state.getPossibleMoves().size() << endl;
+            print_state(state);
             return 0;
         }
         state.putDisk(result.position);
         print_my_turn(result.position);
-        cin >> temp;
-        if (strcmp(temp, "move") != 0)
-            return 0;
-        state.putDisk(read_enemy_turn());
+        process_all_enemy_moves(state);
     }
     return 0;
 }
